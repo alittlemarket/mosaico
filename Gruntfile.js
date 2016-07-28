@@ -82,7 +82,7 @@ module.exports = function(grunt) {
             standalone: 'Mosaico'
           },
           transform: ['browserify-data'],
-          watch: true,
+          watch: true
         },
         files: {
           'build/mosaico.js': ['./src/js/app.js', './build/templates.js'],
@@ -97,7 +97,7 @@ module.exports = function(grunt) {
             standalone: 'Mosaico'
           },
           transform: ['browserify-data', 'uglifyify'],
-          watch: true,
+          watch: true
         },
         files: {
           'build/mosaico.debug.js': ['./src/js/app.js', './build/templates.js'],
@@ -269,8 +269,7 @@ module.exports = function(grunt) {
         },
         src: ['src/**/*.js']
       }
-    },
-
+    }
   });
 
   grunt.registerTask('js', ['combineKOTemplates', 'browserify', 'exorcise']);
