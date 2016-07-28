@@ -79,6 +79,34 @@ viewModel.deleteEdit = function(index) {
     }
     return false;
 };
+/**
+ * @param index
+ */
+viewModel.exportEdit = function(index) {
+
+    var editId              = viewModel.edits()[index].key,
+        metadataFilename    = 'metadata-'+editId,
+        templateFilename    = 'template-'+editId,
+        metadataContent     = localStorage.getItem(metadataFilename),
+        templateContent     = localStorage.getItem(templateFilename);
+
+    if (metadataContent === null || templateContent === null) {
+        alert('Ooops, can\'t find NL ' + editId);
+        return false;
+    }
+
+    var zip = new JSZip();
+    zip.file(metadataFilename + '.json', metadataContent);
+    zip.file(templateFilename + '.json', templateContent);
+    zip.generateAsync({type:"blob"})
+        .then(function (blob) {
+            saveAs(blob, "mosaico_"+editId+".zip");
+        }, function (err) {
+            throw err;
+        });
+
+    return false;
+};
 viewModel.list = function(clean) {
     for (var i = localStorage.length - 1; i >= 0; i--) {
         var key = localStorage.key(i);
@@ -90,6 +118,14 @@ viewModel.list = function(clean) {
         }
     }
 };
+viewModel.exportAll = function() {
+
+};
+
+viewModel.massImport = function() {
+
+};
+
 document.addEventListener('DOMContentLoaded',function(){
     ko.applyBindings(viewModel);
 });
