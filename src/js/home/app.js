@@ -1,32 +1,136 @@
-/* global ko */
+/* global ko JSZip $ */
 
-var initialEdits = [];
 var templates = require('../../../res/vendor/skins/main/templates/templates.json');
 
-if (localStorage.getItem('edits')) {
-    var editKeys = JSON.parse(localStorage.getItem('edits'));
-    var md;
-    for (var i = 0; i < editKeys.length; i++) {
-        md = localStorage.getItem('metadata-'+editKeys[i]);
-        if (typeof md == 'string') {
-            initialEdits.push(JSON.parse(md));
-        } else {
-            console.log("Ignoring saved key", editKeys[i], "type", typeof md, md);
-        }
+/**
+ * Extract Zip, read content and call 'importEdit'
+ *
+ * @param {File} f
+ */
+function handleFile(f) {
+    var editId = getEditIdFromFilename(f.name);
+    if (editId !== false) {
+
+        var deferred = {
+            metadata: $.Deferred(),
+            template: $.Deferred()
+        };
+
+        $.when(deferred.metadata, deferred.template).then(function(file1, file2) {
+            if (arguments.length !== 2) {
+                alert('Invalid file');
+                return;
+            }
+            if (importEdit(editId, file1, file2)) {
+                var editsData = readEdits();
+                viewModel.edits.removeAll();
+                viewModel.edits.push.apply(viewModel.edits, editsData);
+            }
+        });
+
+        JSZip.loadAsync(f)
+            .then(function(zip) {
+                zip.forEach(function(relativePath, zipEntry) {
+                    var def;
+
+                    if (zipEntry.name.indexOf('metadata') === 0){
+                        def = deferred.metadata;
+                    } else if (zipEntry.name.indexOf('template') === 0) {
+                        def = deferred.template;
+                    } else {
+                        console.error('Invalid Zip content')
+                    }
+
+                    zipEntry.async("string").then(function success(content) {
+                        def.resolve(content);
+                    }, function error(e) {
+                        def.reject(e);
+                    });
+                });
+            }, function(e) {
+                console.error(f.name, e.message);
+            });
+
+        return;
     }
 
-    initialEdits.sort(function(a, b) {
-        var lastA = a.changed ? a.changed : a.created;
-        var lastB = b.changed ? b.changed : b.created;
-        if (lastA < lastB) return 1;
-        if (lastA > lastB) return -1;
-        return 0;
-    });
+    alert('Invalid file');
+}
+
+/**
+ * Check filename is like mosaico_{id}.zip
+ * Return {id}
+ *
+ * @param {string} filename
+ * @returns {string|false}
+ */
+function getEditIdFromFilename(filename) {
+    var temp = filename.split('.');
+    if (temp.length===2) {
+        var parts = temp[0].split('_');
+        if (parts[0] === 'mosaico') {
+            return parts[1];
+        }
+    }
+    return false;
+}
+
+/**
+ * Transform edits localstorage into Ko ready array
+ *
+ * @returns {Array}
+ */
+function readEdits() {
+
+    var edits = [];
+    if (localStorage.getItem('edits')) {
+        var editKeys = JSON.parse(localStorage.getItem('edits'));
+        var md;
+
+        for (var i = 0; i < editKeys.length; i++) {
+            md = localStorage.getItem('metadata-' + editKeys[i]);
+            if (typeof md == 'string') {
+                edits.push(JSON.parse(md));
+            } else {
+                console.log("Ignoring saved key", editKeys[i], "type", typeof md, md);
+            }
+        }
+
+        edits.sort(function (a, b) {
+            var lastA = a.changed ? a.changed : a.created;
+            var lastB = b.changed ? b.changed : b.created;
+            if (lastA < lastB) return 1;
+            if (lastA > lastB) return -1;
+            return 0;
+        });
+    }
+    return edits;
+}
+
+/**
+ *
+ * @param id
+ * @param metadata
+ * @param template
+ */
+function importEdit(id, metadata, template) {
+    var editKeys = JSON.parse(localStorage.getItem('edits'));
+
+    if (editKeys.indexOf(id) === -1) {
+        editKeys.push(id);
+        localStorage.setItem('edits', JSON.stringify(editKeys));
+        localStorage.setItem("metadata-" + id, metadata);
+        localStorage.setItem("template-" + id, template);
+        return true;
+    }
+
+    alert("Oops, config " + id + " already loaded");
+    return false;
 }
 
 var viewModel = {
     showSaved: ko.observable(false),
-    edits: ko.observableArray(initialEdits),
+    edits: ko.observableArray(readEdits()),
     templates: templates
 };
 
@@ -79,8 +183,22 @@ viewModel.deleteEdit = function(index) {
     }
     return false;
 };
+viewModel.list = function(clean) {
+    for (var i = localStorage.length - 1; i >= 0; i--) {
+        var key = localStorage.key(i);
+        if (clean) {
+            console.log("removing ", key, localStorage.getItem(key));
+            localStorage.removeItem(key);
+        } else {
+            console.log("ls ", key, localStorage.getItem(key));
+        }
+    }
+};
+
 /**
- * @param index
+ * Get data from localstorage and output a zip to the browser
+ *
+ * @param {String} index Edit id
  */
 viewModel.exportEdit = function(index) {
 
@@ -107,23 +225,18 @@ viewModel.exportEdit = function(index) {
 
     return false;
 };
-viewModel.list = function(clean) {
-    for (var i = localStorage.length - 1; i >= 0; i--) {
-        var key = localStorage.key(i);
-        if (clean) {
-            console.log("removing ", key, localStorage.getItem(key));
-            localStorage.removeItem(key);
-        } else {
-            console.log("ls ", key, localStorage.getItem(key));
-        }
+
+/**
+ * Event handler to the input file change event
+ *
+ * @param {Object} data
+ * @param {Event} event Change event
+ */
+viewModel.fileSelected = function(data, event) {
+    var files = event.target.files;
+    for (var i = 0, f; f = files[i]; i++) {
+        handleFile(f);
     }
-};
-viewModel.exportAll = function() {
-
-};
-
-viewModel.massImport = function() {
-
 };
 
 document.addEventListener('DOMContentLoaded',function(){

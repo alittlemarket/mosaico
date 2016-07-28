@@ -67,18 +67,16 @@
                 <td>
                   <a class="operationButton" href="#" data-bind="attr: { href: 'editor.html#'+key }" title="edit"><i class="fa fa-pencil"></i></a>
                   <a class="operationButton" href="#" data-bind="click: $root.deleteEdit.bind(undefined, $index())" title="delete"><i class="fa fa-trash-o"></i></a>
-                  <a class="operationButton" href="#" data-bind="click: $root.exportEdit.bind(undefined, $index())" title="Export"><i class="fa fa-save"></i></a>
+                  <a class="operationButton" href="#" data-bind="if: (window.FileReader && window.ArrayBuffer), click: $root.exportEdit.bind(undefined, $index())" title="Export"><i class="fa fa-save"></i></a>
                 </td>
               </tr>
             </tbody>
-            <tfoot>
+            <tfoot data-bind="if: (window.FileReader && window.ArrayBuffer)">
               <tr>
-                <th colspan="4">Exporter toutes les configs</th>
-                <th><a class="operationButton" href="#" data-bind="click: $root.exportAll" title="export all"><i class="fa fa-save"></i></a></th>
-              </tr>
-              <tr>
-                <th colspan="4">Mass import</th>
-                <th><a class="operationButton" href="#" data-bind="click: $root.massImport" title="Mass import"><i class="fa fa-download"></i></a></th>
+                <th colspan="4">Import</th>
+                <th>
+                  <input type="file" name="import_config" accept="application/zip, .zip" data-bind="event:{ 'change': $root.fileSelected}" />
+                </th>
               </tr>
             </tfoot>
           </table>
