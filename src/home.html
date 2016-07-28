@@ -57,16 +57,19 @@
     <!-- /ko -->
     </div>
     <!-- /ko -->
+
     <div class="content" style="background-color: white; margin-top: -20px; padding-top: 15px; background-origin: border; padding-bottom: 2em">
-    <h3>Try Mosaico first template: more to come soon, stay tuned!</h3>
-    <div data-bind="foreach: templates">
-      <div class="template template-xx" style="" data-bind="attr: { class: 'template template-'+name }">
-        <div class="description" style="padding-bottom:5px"><b data-bind="text: name">xx</b>: <span data-bind="text: desc">xx</span></div>
-        <a href="#" data-bind="click: $root.newEdit.bind(undefined, name), attr: { href: 'editor.html#templates/'+name+'/template-'+name+'.html' }">
-          <img src width="100%" alt="xx" data-bind="attr: { src: 'templates/'+name+'/edres/_full.png' }">
-        </a>
+      <h3>Try Mosaico first template: more to come soon, stay tuned!</h3>
+      <div data-bind="foreach: templates">
+        <div class="template template-xx" style="" data-bind="attr: { class: 'template template-'+name }">
+          <div class="description" style="padding-bottom:5px">
+            <b data-bind="text: name">xx</b>: <span data-bind="text: desc">xx</span>
+          </div>
+          <a href="#" data-bind="click: $root.newEdit.bind(undefined, name), attr: { href: 'editor.html#' + $root.templatesBasePath + name + '/template-' + name + '.html' }">
+            <img src width="100%" alt="xx" data-bind="attr: { src: $root.templatesBasePath + name + '/edres/_full.png' }">
+          </a>
+        </div>
       </div>
-    </div>
     </div>
 
     <!-- build:include ../res/vendor/skins/main/includes/footer.html -->
